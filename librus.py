@@ -18,10 +18,10 @@ class Librus:
 	# Make connection and get access token
 	def make_connection(self):
 		r = requests.post(self.host + "OAuth/Token", data={"username": str(input("Login: ")),
-																	"password": str(input("Hasło: ")),
-																	"librus_long_term_token": "1",
-																	"grant_type": "password"},
-																headers=self.headers)
+														   "password": str(input("Hasło: ")),
+														   "librus_long_term_token": "1",
+														   "grant_type": "password"},
+						  headers=self.headers)
 
 		self.headers["Authorization"] = "Bearer " + r.json()["access_token"]
 
@@ -34,6 +34,9 @@ class Librus:
 
 		if not self.subjects:
 			self.get_subjects()
+
+		if not self.categories:
+			self.get_categories()
 
 		self.grades = {
 
@@ -54,18 +57,19 @@ class Librus:
 		}
 		"""
 
-		print(r.json()["Grades"])
-
 		for i in r.json()["Grades"]:
-			obj = {
-				"Ocena": i["Grade"],
-				# "Waga": i["Weight"],
-			}
-
 			try:
-				self.grades[self.subjects[i["Subject"]["Id"]]].append(obj)
+				self.grades[self.subjects[i["Subject"]["Id"]]].append({
+					"Ocena": i["Grade"],
+					"Waga": self.categories[i["Category"]["Id"]]["Weight"],
+					"Kategoria": self.categories[i["Category"]["Id"]]["Name"],
+				})
 			except KeyError:
-				self.grades[self.subjects[i["Subject"]["Id"]]] = [obj]
+				self.grades[self.subjects[i["Subject"]["Id"]]] = [{
+					"Ocena": i["Grade"],
+					"Waga": self.categories[i["Category"]["Id"]]["Weight"],
+					"Kategoria": self.categories[i["Category"]["Id"]]["Name"],
+				}]
 
 		print(self.grades)
 
@@ -77,23 +81,20 @@ class Librus:
 	def get_categories(self):
 		r = requests.get(self.host + "2.0/Grades/Categories", headers=self.headers)
 
-		print(r.json()["Categories"])
-
 		for i in r.json()["Categories"]:
 			try:
-				print(i["Name"] + ": " + str(i["Weight"]))
+				self.categories[i["Id"]] = {
+						"Name": i["Name"],
+						"Weight": i["Weight"],
+						"CountToTheAverage": i["CountToTheAverage"],
+					}
+
 			except KeyError:
-				print(i["Name"])
-
-			self.subjects[i["Id"]] = [
-				{
-					"Name": i["Name"],
-					# "Weight": i["Weight"],
-					"CountToTheAverage": i["CountToTheAverage"],
-				}
-			]
-
-		print(self.categories)
+				self.categories[i["Id"]] = {
+						"Name": i["Name"],
+						"Weight": None,
+						"CountToTheAverage": i["CountToTheAverage"],
+					}
 
 	def get_lessons(self):
 		r = requests.get(self.host + "2.0/Lessons", headers=self.headers)
@@ -102,4 +103,3 @@ class Librus:
 		r = requests.get(self.host + "2.0/Users", headers=self.headers)
 
 		[print(str(teacher["Id"]) + ". " + teacher["FirstName"] + " " + teacher["LastName"]) for teacher in r.json()["Users"]]
-
