@@ -36,9 +36,9 @@ grades = {
 }
 ```
 ## get_teachers()
-Zwraca liste nauczycieli w formacie(!format zmieni się w przyszłej aktualizacji!):
+Zwraca liste nauczycieli w formacie:
 ```
-112233: {
+112233: { # ID nauczyciela
   "FirstName": "Janusz",
   "LastName": "Kowalski",
 }
