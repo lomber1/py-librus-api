@@ -36,10 +36,31 @@ grades = {
 }
 ```
 ## get_teachers()
-Zwraca liste nauczycieli w formacie:
+Funkcja zawiera różne tryby, np. print:
 ```
-112233: { # ID nauczyciela
-  "FirstName": "Janusz",
-  "LastName": "Kowalski",
+get_teachers(mode="print")
+```
+### Lista trybów i format:
+#### normal (domyślny)
+```
+{
+  1123576: {'FirstName': 'Jan', 'LastName': 'Kowalski'},
+  1983456: {'FirstName': 'Grażyna', 'LastName': 'Kowalska'},
+  ...
 }
 ```
+#### print
+```
+[
+  "Jan Kowalski",
+  "Grażyna Kowalska",
+  ...
+]
+```
+#### print-with-id
+```
+[
+  '1476937: Jan Kowalski',
+  '1484010: Grazyna Kowalska',
+  ...
+ ]
