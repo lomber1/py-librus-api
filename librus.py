@@ -1,5 +1,4 @@
 import requests
-from pprint import pprint
 from getpass import getpass
 
 
@@ -9,6 +8,7 @@ class Librus:
         "Authorization": "Basic Mjg6ODRmZGQzYTg3YjAzZDNlYTZmZmU3NzdiNThiMzMyYjE="
     }
 
+    lucky_number = 0
     grades = {}
     subjects = {}
     categories = {}
@@ -29,7 +29,9 @@ class Librus:
 
     def get_lucky_number(self):
         r = requests.get(self.host + "2.0/LuckyNumbers", headers=self.headers)
-        print("Szczęśliwy numerek: " + str(r.json()["LuckyNumber"]["LuckyNumber"]))
+        self.lucky_number = r.json()["LuckyNumber"]["LuckyNumber"]
+
+        return self.lucky_number
 
     def get_grades(self):
         r = requests.get(self.host + "2.0/Grades", headers=self.headers)
@@ -62,7 +64,7 @@ class Librus:
                 "Do średniej": self.categories[i["Category"]["Id"]]["CountToTheAverage"]
             })
 
-        pprint(self.grades)
+        return self.grades
 
     def get_subjects(self):
         r = requests.get(self.host + "2.0/Subjects", headers=self.headers)
@@ -90,7 +92,7 @@ class Librus:
                 "CountToTheAverage": i["CountToTheAverage"],
             }
 
-    def get_teachers(self):
+    def get_teachers(self, *, mode="normal"):
         r = requests.get(self.host + "2.0/Users", headers=self.headers)
 
         self.teachers = {
@@ -99,6 +101,13 @@ class Librus:
                 "LastName": i["LastName"]
             } for i in r.json()["Users"]
         }
+
+        if mode == "print":
+            return ["%s %s" % (data["FirstName"], data["LastName"]) for t_id, data in self.teachers.items()]
+        elif mode == "print-with-id":
+            return ["%s: %s %s" % (t_id, data["FirstName"], data["LastName"]) for t_id, data in self.teachers.items()]
+
+        return self.teachers
 
     def get_comments(self):
         r = requests.get(self.host + "2.0/Grades/Comments", headers=self.headers)
