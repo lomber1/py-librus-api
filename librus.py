@@ -1,6 +1,7 @@
 import requests
 import sys
 from getpass import getpass
+from pprint import pprint
 
 
 class Librus:
@@ -14,11 +15,15 @@ class Librus:
     grades = None
     subjects = None
     categories = None
+    students = None
     teachers = None
     comments = None
+    school_free_days = None
+    teacher_free_days = None
+    teacher_free_days_types = None
 
     # Checks data and decides method of login
-    def login(self, login, password, mode="custom"):
+    def login(self, login=None, password=None, mode="custom"):
         if not self.logged_in:
             if mode == "console":
                 if self.make_connection(str(input("Login: ")), str(getpass(prompt="Hasło: "))):
@@ -48,7 +53,6 @@ class Librus:
 
                 self.logged_in = True
                 self.headers["Authorization"] = "Bearer " + r.json()["access_token"]
-                print("Nawiązano połączenie")
 
                 return True
             except requests.exceptions.Timeout:
@@ -61,10 +65,17 @@ class Librus:
                 print(e)
                 return False
 
+    def get_data(self, url):
+        if self.logged_in:
+            return requests.get(self.host + "2.0/" + url, headers=self.headers)
+        else:
+            raise Exception("User not logged in")
+
     def get_lucky_number(self):
         if self.lucky_number is None:
             try:
-                r = requests.get(self.host + "2.0/LuckyNumbers", headers=self.headers)
+                r = self.get_data("LuckyNumbers")
+
                 try:
                     self.lucky_number = r.json()["LuckyNumber"]["LuckyNumber"]
                     return self.lucky_number
@@ -78,7 +89,7 @@ class Librus:
             return self.lucky_number
 
     def get_grades(self):
-        r = requests.get(self.host + "2.0/Grades", headers=self.headers)
+        r = self.get_data("Grades")
 
         if not self.subjects:
             self.get_subjects()
@@ -101,20 +112,20 @@ class Librus:
                 comment = "Brak komentarza"
 
             self.grades[self.subjects[i["Subject"]["Id"]]].append({
-                "Ocena": i["Grade"],
-                "Waga": self.categories[i["Category"]["Id"]]["Weight"],
-                "Kategoria": self.categories[i["Category"]["Id"]]["Name"],
-                "Nauczyciel": "%s %s" % (self.teachers[i["AddedBy"]["Id"]]["FirstName"],
-                                         self.teachers[i["AddedBy"]["Id"]]["LastName"]),
-                "Komentarz": comment,
-                "Do średniej": self.categories[i["Category"]["Id"]]["CountToTheAverage"]
+                "Grade": i["Grade"],
+                "Weight": self.categories[i["Category"]["Id"]]["Weight"],
+                "Category": self.categories[i["Category"]["Id"]]["Name"],
+                "Teacher": "%s %s" % (self.teachers[i["AddedBy"]["Id"]]["FirstName"],
+                                      self.teachers[i["AddedBy"]["Id"]]["LastName"]),
+                "Comment": comment,
+                "To_the_average": self.categories[i["Category"]["Id"]]["CountToTheAverage"]
             })
 
         return self.grades
 
     def get_subjects(self):
         if self.subjects is None:
-            r = requests.get(self.host + "2.0/Subjects", headers=self.headers)
+            r = self.get_data("Subjects")
 
             self.subjects = {i["Id"]: i["Name"] for i in r.json()["Subjects"]}
 
@@ -122,7 +133,7 @@ class Librus:
         if self.categories is None:
             self.categories = {}
 
-            r = requests.get(self.host + "2.0/Grades/Categories", headers=self.headers)
+            r = self.get_data("Grades/Categories")
 
             for i in r.json()["Categories"]:
                 if "Weight" in i:
@@ -143,7 +154,7 @@ class Librus:
 
     def get_teachers(self, *, mode="normal"):
         if self.teachers is None:
-            r = requests.get(self.host + "2.0/Users", headers=self.headers)
+            r = self.get_data("Users")
 
             self.teachers = {
                 i["Id"]: {
@@ -161,7 +172,7 @@ class Librus:
 
     def get_comments(self):
         if self.comments is None:
-            r = requests.get(self.host + "2.0/Grades/Comments", headers=self.headers)
+            r = self.get_data("Grades/Comments")
 
             self.comments = {
                 i["Id"]: {
@@ -170,3 +181,38 @@ class Librus:
             }
 
         return self.comments
+
+    def get_school_free_days(self):
+        if self.school_free_days is None:
+            r = self.get_data("SchoolFreeDays")
+            self.school_free_days = r.json()["SchoolFreeDays"]
+
+            for i in self.school_free_days:
+                for e in ["Id", "Units"]:
+                    i.pop(e)
+
+        return self.school_free_days
+
+    def get_teacher_free_days(self):
+        if self.teachers is None:
+            self.get_teachers()
+
+        if self.teacher_free_days_types is None:
+            r = self.get_data("TeacherFreeDays/Types")
+
+            self.teacher_free_days_types = {
+                i["Id"]: i["Name"] for i in r.json()["Types"]
+            }
+
+        if self.teacher_free_days is None:
+            r = self.get_data("TeacherFreeDays")
+
+            self.teacher_free_days = r.json()["TeacherFreeDays"]
+
+            for i in self.teacher_free_days:
+                i.pop("Id")
+                i["Teacher"] = "%s %s" % (self.teachers[i["Teacher"]["Id"]]["FirstName"],
+                                          self.teachers[i["Teacher"]["Id"]]["LastName"],)
+                i["Type"] = self.teacher_free_days_types[i["Type"]["Id"]]
+
+        return self.teacher_free_days

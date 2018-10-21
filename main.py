@@ -37,8 +37,6 @@ class MainApplication(tk.Frame):
 
     def callback_submit_btn(self):
         self.login()
-        if librus.logged_in:
-            pprint(librus.get_grades())
 
     def login(self):
         login = self.login_input.get()
@@ -47,7 +45,7 @@ class MainApplication(tk.Frame):
         if not librus.logged_in:
             self.loading_label.config(text="Logowanie...")
 
-            if librus.login(login, password, mode="custom"):
+            if librus.login(login, password):
                 self.loading_label.config(text="Zalogowano!")
                 print("Zalogowano.")
                 # TODO: Nowe okno z gownami
@@ -65,6 +63,7 @@ class MainApplication(tk.Frame):
 
 
 if __name__ == "__main__":
+    # Librus API init
     librus = Librus()
 
     # Tkinter
