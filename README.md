@@ -1,4 +1,4 @@
-Dokumentacja w polskim jest [tutaj.](README_pl.md)
+Dokumentacja w języku polskim jest [tutaj.](README_pl.md)
 # py-librus-api
 # Table of contents
 1. [Intro](#intro)
