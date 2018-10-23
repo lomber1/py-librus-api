@@ -66,7 +66,7 @@ grades = {
   ...
 }
 ```
-**Note that subject names in foreign language. (polish)**
+**Note that subject names are in language provided by Librus API (in this example it's polish)**
 ## get_teachers(mode*)
 Returns teachers' personal data (firstname, lastname) in couple of formats.
 You can choose format like that:
