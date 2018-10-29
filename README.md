@@ -124,3 +124,23 @@ Format:
 ```
 **It can happen that `TimeFrom` and `TimeTo` don't exist!**
 
+## get_attendances()
+Returns attendances in this format:
+```
+[
+{'AddDate': '2018-10-29 12:52:51',
+  'AddedBy': {'FirstName': 'Jan', 'LastName': 'Kowalski'},
+  'Date': '2018-10-29',
+  'Id': 123456,
+ 'Lesson': {'Subject': 'Chemia',
+            'Teacher': {'FirstName': 'Jan', 'LastName': 'Kowalski'}},
+  'LessonNo': 6,
+  'Semester': 1,
+  'Type': {'IsPresenceKind': True,
+           'Name': 'Obecność',
+           'Order': 1,
+           'Short': 'ob',
+           'Standard': True}}
+  ...
+]
+```

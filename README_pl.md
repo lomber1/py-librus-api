@@ -119,3 +119,23 @@ Zwraca listę nieobecności nauczyciela w formacie*:
 ```
 **Może się zdarzyć, że pola `TimeFrom` i `TimeTo` nie będą istniały!**
 
+## get_attendances()
+Zwraca listę obecności, nieobecności itp. w tym formacie:
+```
+[
+{'AddDate': '2018-10-29 12:52:51',
+  'AddedBy': {'FirstName': 'Jan', 'LastName': 'Kowalski'},
+  'Date': '2018-10-29',
+  'Id': 123456,
+ 'Lesson': {'Subject': 'Chemia',
+            'Teacher': {'FirstName': 'Jan', 'LastName': 'Kowalski'}},
+  'LessonNo': 6,
+  'Semester': 1,
+  'Type': {'IsPresenceKind': True,
+           'Name': 'Obecność',
+           'Order': 1,
+           'Short': 'ob',
+           'Standard': True}}
+  ...
+]
+```
