@@ -110,7 +110,7 @@ Zwraca listę nieobecności nauczyciela w formacie*:
     {
         'DateFrom': '2018-10-09',
         'DateTo': '2018-10-09',
-        'Teacher': 'Iwona Kuśmierczuk',
+        'Teacher': {'FirstName': 'Jan', 'LastName': 'Kowalski'},
         'TimeFrom': '13:40:00',
         'TimeTo': '15:15:00',
         'Type': 'szkolenie'

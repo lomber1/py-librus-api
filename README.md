@@ -116,11 +116,13 @@ Format:
         'DateFrom': '2018-10-24',
         'DateTo': '2018-10-26',
         'Teacher': {'FirstName': 'Jan', 'LastName': 'Kowalski'},
-        'Type': 'urlop bezpłatny',
+        'TimeFrom': '13:40:00',
+        'TimeTo': '15:15:00',
+        'Type': 'szkolenie'
     },
 ]
 ```
-**It can happen that `TimeFrom` and `TimeTo` don't exist!**
+**It can happen that `TimeFrom` and `TimeTo` won't exist!**
 
 ## get_attendances()
 Returns attendances in this format:
