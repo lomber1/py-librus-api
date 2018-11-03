@@ -1,7 +1,5 @@
 import requests
 import sys
-from getpass import getpass
-from pprint import pprint
 
 
 class Librus:
