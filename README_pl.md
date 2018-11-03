@@ -22,23 +22,15 @@ print(librus.get_lucky_number())
 # Spis funkcji
 **Wymagane parametry/funkcje zaznaczone są prefixem `!`**<br>
 **Jeżeli przy nazwie jest `*` oznacza to, że poniżej będzie wyjaśnienie jakiejś rzeczy**
-## !login(login*, password*, mode*)
+## !login(!login, !password)
 Funkcja zwraca true gdy logowanie powiodło się i false gdy nie.<br>
-`login` - Zmienna string z loginem użytkownika **domyślnie None**<br>
-`password` - Zmienna string z hasłem użytkownika **domyślnie None**<br>
-`mode` - Zmienna string **domyślnie custom**<br>
-**Logowanie przez konsolę**
-```python
-librus.login(mode="console")
-```
-**Logowanie bez konsoli (dane logowania w argumentach)**
+`login` - Zmienna string z loginem użytkownika.<br>
+`password` - Zmienna string z hasłem użytkownika.<br>
+Przykładowe użycie:
 ```python
 librus.login(login_var, password_var)
 ```
-#### Możliwe kombinacje argumentu mode
-**mode="console"** - Zmusza funkcję do użycia konsoli w celu logowania.<br>
-**mode="custom"** - Zmusza funkcję do użycia zmiennych z danymi.<br>
-## Przed użyciem funkcji powinno sprawdzić się, czy użytkownik jest zalogowany!
+## Możesz sprawdzić czy użytkownik jest zalogowany!
 ```python
 if librus.logged_in:
     ...

@@ -26,21 +26,15 @@ class Librus:
     attendances_types = None
 
     # Checks data and decides method of login
-    def login(self, login=None, password=None, mode="custom"):
+    def login(self, login, password):
         if not self.logged_in:
-            if mode == "console":
-                if self.make_connection(str(input("Login: ")), str(getpass(prompt="Hasło: "))):
+            if login is None or password is None or login == "" or password == "":
+                return False
+            else:
+                if self.make_connection(login, password):
                     return True
                 else:
                     return False
-            else:
-                if login is None or password is None or login == "" or password == "":
-                    return False
-                else:
-                    if self.make_connection(login, password):
-                        return True
-                    else:
-                        return False
 
     # Make connection and get access token
     def make_connection(self, login, password):
