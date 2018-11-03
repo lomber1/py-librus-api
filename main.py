@@ -117,8 +117,7 @@ class Librus:
                 "Grade": i["Grade"],
                 "Weight": self.categories[i["Category"]["Id"]]["Weight"],
                 "Category": self.categories[i["Category"]["Id"]]["Name"],
-                "Teacher": "%s %s" % (self.teachers[i["AddedBy"]["Id"]]["FirstName"],
-                                      self.teachers[i["AddedBy"]["Id"]]["LastName"]),
+                "Teacher": self.teachers[i["AddedBy"]["Id"]],
                 "Comment": comment,
                 "To_the_average": self.categories[i["Category"]["Id"]]["CountToTheAverage"]
             })
@@ -217,8 +216,7 @@ class Librus:
 
             for i in self.teacher_free_days:
                 i.pop("Id")
-                i["Teacher"] = "%s %s" % (self.teachers[i["Teacher"]["Id"]]["FirstName"],
-                                          self.teachers[i["Teacher"]["Id"]]["LastName"],)
+                i["Teacher"] = self.teachers[i["Teacher"]["Id"]]
                 i["Type"] = self.teacher_free_days_types[i["Type"]["Id"]]
 
         return self.teacher_free_days
@@ -244,20 +242,20 @@ class Librus:
         return self.lessons
 
     def get_attendances(self):
-        if self.attendances_types is None:
-            r = self.get_data("Attendances/Types")
-
-            self.attendances_types = {
-                i["Id"]: {
-                    "Name": i["Name"],
-                    "Short": i["Short"],
-                    "Standard": i["Standard"],
-                    "IsPresenceKind": i["IsPresenceKind"],
-                    "Order": i["Order"]
-                } for i in r.json()["Types"]
-            }
-
         if self.attendances is None:
+            if self.attendances_types is None:
+                r = self.get_data("Attendances/Types")
+
+                self.attendances_types = {
+                    i["Id"]: {
+                        "Name": i["Name"],
+                        "Short": i["Short"],
+                        "Standard": i["Standard"],
+                        "IsPresenceKind": i["IsPresenceKind"],
+                        "Order": i["Order"]
+                    } for i in r.json()["Types"]
+                }
+
             if self.lessons is None:
                 self.get_lessons()
 
@@ -269,9 +267,4 @@ class Librus:
                 i["AddedBy"] = self.teachers[i["AddedBy"]["Id"]]
                 i["Lesson"] = self.lessons[i["Lesson"]["Id"]]
 
-            pprint(self.attendances)
-
-
-librus = Librus()
-librus.login(mode="console")
-librus.get_attendances()
+        return self.attendances

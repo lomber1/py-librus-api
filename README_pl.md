@@ -12,7 +12,7 @@ Nie ma gwarancji na to, że API będzie rozwijane!
 Kiedyś będzie
 # Przykładowe użycie
 ```python
-from librus import Librus()
+from librus import Librus
 
 librus = Librus()
 librus.login(login, password) # Więcej info w spisie funkcji.
@@ -55,7 +55,7 @@ grades = {
       "grade": "5",
       "Weight": "3",
       "Category": "Kartkówka",
-      "Teacher": "Janusz Kowalski",
+      'Teacher': {'FirstName': 'Jan', 'LastName': 'Kowalski'},
       "Comment": "kartkówka z działu o płazach",
       "To_the_average": "Tak"
     }
@@ -127,7 +127,7 @@ Zwraca listę obecności, nieobecności itp. w tym formacie:
   'AddedBy': {'FirstName': 'Jan', 'LastName': 'Kowalski'},
   'Date': '2018-10-29',
   'Id': 123456,
- 'Lesson': {'Subject': 'Chemia',
+  'Lesson': {'Subject': 'Chemia',
             'Teacher': {'FirstName': 'Jan', 'LastName': 'Kowalski'}},
   'LessonNo': 6,
   'Semester': 1,

@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="py-librus-api",
-    version="0.2.0",
+    version="0.2.1",
     author="Tomasz Nieżurawski",
     author_email="tomek.niezurawski@gmail.com",
     description="A librus api made in python.",

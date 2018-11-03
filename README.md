@@ -12,7 +12,7 @@ There is no guarantee of developing this API further more!
 Someday...
 # Example usage
 ```python
-from librus import Librus()
+from librus import Librus
 
 librus = Librus()
 librus.login(login, password)
@@ -57,7 +57,7 @@ grades = {
       "Grade": "5",
       "Weight": "3",
       "Category": "Kartkówka",
-      "Teacher": "Janusz Kowalski",
+      'Teacher': {'FirstName': 'Jan', 'LastName': 'Kowalski'},
       "Comment": "kartkówka z działu o płazach",
       "To_the_average": "Tak"
     }
@@ -113,12 +113,10 @@ Format:
 ```
 [
     {
-        'DateFrom': '2018-10-09',
-        'DateTo': '2018-10-09',
-        'Teacher': 'Iwona Kuśmierczuk',
-        'TimeFrom': '13:40:00',
-        'TimeTo': '15:15:00',
-        'Type': 'szkolenie'
+        'DateFrom': '2018-10-24',
+        'DateTo': '2018-10-26',
+        'Teacher': {'FirstName': 'Jan', 'LastName': 'Kowalski'},
+        'Type': 'urlop bezpłatny',
     },
 ]
 ```
@@ -134,13 +132,14 @@ Returns attendances in this format:
   'Id': 123456,
  'Lesson': {'Subject': 'Chemia',
             'Teacher': {'FirstName': 'Jan', 'LastName': 'Kowalski'}},
-  'LessonNo': 6,
-  'Semester': 1,
-  'Type': {'IsPresenceKind': True,
+ 'LessonNo': 6,
+ 'Semester': 1,
+ 'Type': {'IsPresenceKind': True,
            'Name': 'Obecność',
            'Order': 1,
            'Short': 'ob',
-           'Standard': True}}
-  ...
+           'Standard': True}
+           }
+ ...
 ]
 ```
