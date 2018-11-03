@@ -46,39 +46,38 @@ class Librus:
                                                                    "grant_type": "password"},
                     headers=self.headers)
 
-                self.logged_in = True
-                self.headers["Authorization"] = "Bearer " + r.json()["access_token"]
+                if r.ok:
+                    self.logged_in = True
+                    self.headers["Authorization"] = "Bearer " + r.json()["access_token"]
 
-                return True
+                    return True
+                else:
+                    return False
             except requests.exceptions.Timeout:
                 if loop >= 10:
                     return False
                 else:
                     loop += 1
                     continue
-            except requests.exceptions.RequestException as e:
+            except requests.exceptions.RequestException:
                 raise requests.exceptions.ConnectionError
 
     def get_data(self, url):
         if self.logged_in:
-            return requests.get(self.host + "2.0/" + url, headers=self.headers)
+            try:
+                return requests.get(self.host + "2.0/" + url, headers=self.headers)
+            except (requests.exceptions.ConnectionError, TimeoutError, requests.exceptions.Timeout,
+                    requests.exceptions.ConnectTimeout, requests.exceptions.ReadTimeout):
+                    raise Exception("Connection error")
         else:
             raise Exception("User not logged in")
 
     def get_lucky_number(self):
         if self.lucky_number is None:
-            try:
-                r = self.get_data("LuckyNumbers")
-
-                try:
-                    self.lucky_number = r.json()["LuckyNumber"]["LuckyNumber"]
-                    return self.lucky_number
-                except KeyError:
-                    return None
-            except (requests.exceptions.ConnectionError, TimeoutError, requests.exceptions.Timeout,
-                    requests.exceptions.ConnectTimeout, requests.exceptions.ReadTimeout) as e:
-                print(e)
-                sys.exit(1)
+            r = self.get_data("LuckyNumbers")
+            self.lucky_number = r.json()["LuckyNumber"]["LuckyNumber"]
+            
+            return self.lucky_number
 
         return self.lucky_number
 

@@ -1,3 +1,6 @@
 .idea/
 __pycache__
 .main
+build
+dist
+py_librus_api.egg-info

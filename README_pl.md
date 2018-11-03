@@ -9,15 +9,21 @@ Documentation in english can be found [there.](README.md)
 API do e-dziennika librus synergia.
 Nie ma gwarancji na to, że API będzie rozwijane!
 # Instalacja
-Kiedyś będzie
+`pip install py-librus-api`
 # Przykładowe użycie
 ```python
-from librus import Librus
+from py_librus_api import Librus
+
 
 librus = Librus()
-librus.login(login, password) # Więcej info w spisie funkcji.
-print(librus.get_lucky_number())
-# 14
+
+"""Zapętla się dopóki użytkownik nie zaloguje się"""
+while not librus.logged_in:
+    if not librus.login(login, password):
+        print("Logowanie nie powiodło się! Sprawdź twój nick i/lub hasło.")
+    else:
+        print("Zalogowano.")
+
 ```
 # Spis funkcji
 **Wymagane parametry/funkcje zaznaczone są prefixem `!`**<br>
@@ -35,6 +41,8 @@ librus.login(login_var, password_var)
 if librus.logged_in:
     ...
 ```
+## Jeżeli użytkownik nie jest zalogowany, funkcje zwrócą -1!
+## Jeżeli nastąpi błąd połączenia, funkcje zwrócą -2!
 ## get_lucky_number()
 Zwraca szczęśiwy numerek w formacie `int`
 ## get_grades()

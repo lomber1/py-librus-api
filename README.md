@@ -9,15 +9,22 @@ Dokumentacja w języku polskim jest [tutaj.](README_pl.md)
 API for librus e-register.<br>
 There is no guarantee of developing this API further more!
 # Instalation
-Someday...
+`pip install py-librus-api`
 # Example usage
 ```python
-from librus import Librus
+from py_librus_api import Librus
+
 
 librus = Librus()
-librus.login(login, password)
-print(librus.get_lucky_number())
-# 14
+
+"""Loops until user logs in successfully"""
+while not librus.logged_in:
+    if not librus.login(login, password):
+        print("Log in failed! Check your username and/or password!")
+    else:
+        print("Logged in successfully!")
+
+# Your code goes here
 ```
 More info in [functions](#functions)
 # Functions
@@ -36,7 +43,8 @@ librus.login(login_var, password_var)
 if librus.logged_in:
     ...
 ```
-**If user is not logged in, `User not logged in` exception will be raised!!**
+## If user is not logged in, "User not logged in" exception will be raised!
+## If connection error occurs, "Connection error" will be raised!
 ## get_lucky_number()
 Returns lucky number (`int`).
 ## get_grades()
