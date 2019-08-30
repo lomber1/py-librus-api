@@ -1,7 +1,6 @@
 import requests
 import sys
 
-
 class Librus:
     host = "https://api.librus.pl/"
     headers = {
@@ -22,6 +21,7 @@ class Librus:
     teacher_free_days_types = None
     attendances = None
     attendances_types = None
+    notices = None
 
     # Checks data and decides method of login
     def login(self, login, password):
@@ -76,8 +76,6 @@ class Librus:
         if self.lucky_number is None:
             r = self.get_data("LuckyNumbers")
             self.lucky_number = r.json()["LuckyNumber"]["LuckyNumber"]
-            
-            return self.lucky_number
 
         return self.lucky_number
 
@@ -259,3 +257,21 @@ class Librus:
                 i["Lesson"] = self.lessons[i["Lesson"]["Id"]]
 
         return self.attendances
+
+    def get_notices(self):
+        if self.notices == None:
+            r = self.get_data("SchoolNotices")
+            self.notices = {
+                notice["Id"]: {
+                    "Subject": notice["Subject"],
+                    "Content": notice["Content"],
+                    "Dates": {
+                        "Added": notice["CreationDate"],
+                        "Start": notice["StartDate"],
+                        "End": notice["EndDate"],
+                    },
+                    "Author": notice["AddedBy"]["Id"],
+                } for notice in r.json()["SchoolNotices"]
+            }
+
+        return self.notices
