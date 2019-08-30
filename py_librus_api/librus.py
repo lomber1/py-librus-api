@@ -1,5 +1,4 @@
 import requests
-import sys
 
 class Librus:
     host = "https://api.librus.pl/"
@@ -26,13 +25,11 @@ class Librus:
     # Checks data and decides method of login
     def login(self, login, password):
         if not self.logged_in:
-            if login is None or password is None or login == "" or password == "":
+            if login is None or password is None or\
+               login == "" or password == "":
                 return False
             else:
-                if self.make_connection(login, password):
-                    return True
-                else:
-                    return False
+                return self.make_connection(login, password)
 
     # Make connection and get access token
     def make_connection(self, login, password):
@@ -40,11 +37,12 @@ class Librus:
         loop = 0
         while r is None:
             try:
-                r = requests.post(self.host + "OAuth/Token", data={"username": login,
-                                                                   "password": password,
-                                                                   "librus_long_term_token": "1",
-                                                                   "grant_type": "password"},
-                    headers=self.headers)
+                r = requests.post(self.host + "OAuth/Token",
+                                  headers=self.headers,
+                                  data={"username": login,
+                                        "password": password,
+                                        "librus_long_term_token": "1",
+                                        "grant_type": "password"})
 
                 if r.ok:
                     self.logged_in = True
