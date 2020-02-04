@@ -105,6 +105,7 @@ class Librus:
                 "Weight": self.categories[i["Category"]["Id"]]["Weight"],
                 "Category": self.categories[i["Category"]["Id"]]["Name"],
                 "Teacher": self.teachers[i["AddedBy"]["Id"]],
+                "Date": i["Date"],
                 "Comment": comment,
                 "To_the_average": self.categories[i["Category"]["Id"]]["CountToTheAverage"]
             })
