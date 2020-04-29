@@ -135,10 +135,13 @@ class Librus:
                 else:
                     w = None
 
-                if i["CountToTheAverage"]:
-                    i["CountToTheAverage"] = "Tak"
+                if "CountToTheAverage" in i:
+                    if i["CountToTheAverage"]:
+                        i["CountToTheAverage"] = "Tak"
+                    else:
+                        i["CountToTheAverage"] = "Nie"
                 else:
-                    i["CountToTheAverage"] = "Nie"
+                    i["CountToTheAverage"] = None
 
                 self.categories[i["Id"]] = {
                     "Name": i["Name"],
