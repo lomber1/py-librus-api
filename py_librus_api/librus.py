@@ -144,16 +144,24 @@ class Librus:
             else:
                 w = None
 
-            if i["CountToTheAverage"]:
-                i["CountToTheAverage"] = "Tak"
-            else:
-                i["CountToTheAverage"] = "Nie"
+            count_to_the_average = None
+            try:
+                count_to_the_average_bool = i["CountToTheAverage"]
 
-            categories[i["Id"]] = {
-                "Name": i["Name"],
-                "Weight": w,
-                "CountToTheAverage": i["CountToTheAverage"],
-            }
+                if count_to_the_average_bool:
+                    count_to_the_average = "Tak"
+                else:
+                    count_to_the_average = "Nie"
+
+            except KeyError:
+                count_to_the_average = -1
+
+            finally:
+                categories[i["Id"]] = {
+                    "Name": i["Name"],
+                    "Weight": w,
+                    "CountToTheAverage": count_to_the_average,
+                }
 
         return categories
 
