@@ -1,5 +1,4 @@
 import requests
-import sys
 
 
 class Librus:
@@ -57,16 +56,30 @@ class Librus:
             raise Exception("User not logged in")
 
     def get_lucky_number(self):
+        """
+        Get lucky number.
+        :return: lucky number (int), -1 if lucky number does it exist
+        """
         r = self.get_data("LuckyNumbers")
-        lucky_number = r.json()["LuckyNumber"]["LuckyNumber"]
 
-        return lucky_number
+        try:
+            lucky_number = r.json()["LuckyNumber"]["LuckyNumber"]
 
-    def get_grades(self, v2=False):
+            return lucky_number
+        except KeyError:
+            return -1
+
+    def get_lucky_number_json(self):
+        """
+        Get lucky number.
+        :return: json response.
+        """
+        r = self.get_data("LuckyNumbers")
+
+        return r.json()
+
+    def get_grades(self):
         r = self.get_data("Grades")
-
-        if v2:
-            return r.json()
 
         subjects = self.get_subjects()
         categories = self.get_categories()
@@ -92,26 +105,38 @@ class Librus:
 
         return grades
 
-    def get_subjects(self, v2=False):
+    def get_grades_json(self):
+        """
+        Get grades.
+        :return: json response.
+        """
+        r = self.get_data("Grades")
+
+        return r.json()
+
+    def get_subjects(self):
         r = self.get_data("Subjects")
 
-        if v2:
-            return r.json()
-
         return {i["Id"]: i["Name"] for i in r.json()["Subjects"]}
+
+    def get_subjects_json(self):
+        """
+        Get subjects.
+        :return: json response.
+        """
+        r = self.get_data("Subjects")
+
+        return r.json()
 
     def get_subject(self, subject_id):
         r = self.get_data("Subjects/{}".format(subject_id))
 
         return r.json()
 
-    def get_categories(self, v2=False):
+    def get_categories(self):
         categories = {}
 
         r = self.get_data("Grades/Categories")
-
-        if v2:
-            return r.json()
 
         for i in r.json()["Categories"]:
             if "Weight" in i:
@@ -132,16 +157,27 @@ class Librus:
 
         return categories
 
+    def get_categories_json(self):
+        """
+        Get all categories.
+        :return: json response.
+        """
+        r = self.get_data("Grades/Categories")
+
+        return r.json()
+
     def get_category(self, category_id):
+        """
+        Get category.
+        :param category_id: id of a category.
+        :return: json response.
+        """
         r = self.get_data("Grades/Categories/{}".format(category_id))
 
         return r.json()
 
-    def get_teachers(self, *, v2=False, mode="normal"):
+    def get_teachers(self, *, mode="normal"):
         r = self.get_data("Users")
-
-        if v2:
-            return r.json()
 
         teachers = {
             i["Id"]: {
@@ -157,16 +193,27 @@ class Librus:
 
         return teachers
 
-    def get_teacher(self, teacher_id):
-        r = self.get_data("Users/{}".format(teacher_id))
+    def get_users(self):
+        """
+        Get all users.
+        :return: json response.
+        """
+        r = self.get_data("Users")
 
         return r.json()
 
-    def get_comments(self, v2=False):
-        r = self.get_data("Grades/Comments")
+    def get_user(self, user_id):
+        """
+        Get user details.
+        :param user_id: id of a user.
+        :return: json response.
+        """
+        r = self.get_data("Users/{}".format(user_id))
 
-        if v2:
-            return r.json()
+        return r.json()
+
+    def get_comments(self):
+        r = self.get_data("Grades/Comments")
 
         comments = {
             i["Id"]: {
@@ -176,11 +223,17 @@ class Librus:
 
         return comments
 
-    def get_school_free_days(self, v2=False):
-        r = self.get_data("SchoolFreeDays")
+    def get_comments_json(self):
+        """
+        Get all comments.
+        :return: json.response
+        """
+        r = self.get_data("Grades/Comments")
 
-        if v2:
-            return r.json()
+        return r.json()
+
+    def get_school_free_days(self):
+        r = self.get_data("SchoolFreeDays")
 
         school_free_days = r.json()["SchoolFreeDays"]
 
@@ -190,14 +243,19 @@ class Librus:
 
         return school_free_days
 
-    def get_teacher_free_days(self, v2=False):
+    def get_school_free_days_json(self):
+        """
+        Get school free days.
+        :return: json response
+        """
+        r = self.get_data("SchoolFreeDays")
+
+        return r.json()
+
+    def get_teacher_free_days(self):
         r = self.get_data("TeacherFreeDays")
 
-        if v2:
-            return r.json()
-
         teacher_free_days = r.json()["TeacherFreeDays"]
-
         teachers = self.get_teachers()
 
         r = self.get_data("TeacherFreeDays/Types")
@@ -212,11 +270,17 @@ class Librus:
 
         return teacher_free_days
 
-    def get_lessons(self, v2=False):
-        r = self.get_data("Lessons")
+    def get_teacher_free_days_json(self):
+        """
+        Get all teacher free days.
+        :return: json response
+        """
+        r = self.get_data("TeacherFreeDays")
 
-        if v2:
-            return r.json()
+        return r.json()
+
+    def get_lessons(self):
+        r = self.get_data("Lessons")
 
         subjects = self.get_subjects()
         teachers = self.get_teachers()
@@ -231,16 +295,27 @@ class Librus:
 
         return lessons
 
+    def get_lessons_json(self):
+        """
+        Get all lessons
+        :return: json response
+        """
+        r = self.get_data("Lessons")
+
+        return r.json()
+
     def get_lesson(self, lesson_id):
+        """
+        Get lesson details.
+        :param lesson_id: id of a lesson.
+        :return: json response.
+        """
         r = self.get_data("Lessons/{}".format(lesson_id))
 
         return r.json()
 
-    def get_attendances(self, v2=False):
+    def get_attendances(self):
         r = self.get_data("Attendances/Types")
-
-        if v2:
-            return r.json()
 
         attendances_types = {
             i["Id"]: {
@@ -263,6 +338,15 @@ class Librus:
             i["Lesson"] = lessons[i["Lesson"]["Id"]]
 
         return attendances
+
+    def get_attendances_json(self):
+        """
+        Get all attendances.
+        :return: json response
+        """
+        r = self.get_data("Attendances")
+
+        return r.json()
 
     # ---------- V2 ---------- #
     def get_class(self, class_id):
