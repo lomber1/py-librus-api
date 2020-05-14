@@ -1,27 +1,14 @@
 import requests
-import sys
 
 
 class Librus:
     host = "https://api.librus.pl/"
-    headers = {
-        "Authorization": "Basic Mjg6ODRmZGQzYTg3YjAzZDNlYTZmZmU3NzdiNThiMzMyYjE="
-    }
-    logged_in = False
 
-    lucky_number = None
-    grades = None
-    subjects = None
-    categories = None
-    students = None
-    teachers = None
-    comments = None
-    lessons = None
-    school_free_days = None
-    teacher_free_days = None
-    teacher_free_days_types = None
-    attendances = None
-    attendances_types = None
+    def __init__(self):
+        self.headers = {
+            "Authorization": "Basic Mjg6ODRmZGQzYTg3YjAzZDNlYTZmZmU3NzdiNThiMzMyYjE="
+        }
+        self.logged_in = False
 
     # Checks data and decides method of login
     def login(self, login, password):
@@ -29,38 +16,34 @@ class Librus:
             if login is None or password is None or login == "" or password == "":
                 return False
             else:
-                if self.make_connection(login, password):
-                    return True
-                else:
-                    return False
+                """Make connection to the host and get auth token"""
+                r = None
+                loop = 0
+                while r is None:
+                    try:
+                        r = requests.post(self.host + "OAuth/Token", data={"username": login,
+                                                                           "password": password,
+                                                                           "librus_long_term_token": "1",
+                                                                           "grant_type": "password"},
+                                          headers=self.headers)
+
+                        if r.ok:
+                            self.logged_in = True
+                            self.headers["Authorization"] = "Bearer " + r.json()["access_token"]
+
+                            return True
+                        else:
+                            return False
+                    except requests.exceptions.Timeout:
+                        if loop >= 10:
+                            return False
+                        else:
+                            loop += 1
+                            continue
+                    except requests.exceptions.RequestException:
+                        raise requests.exceptions.ConnectionError
 
     # Make connection and get access token
-    def make_connection(self, login, password):
-        r = None
-        loop = 0
-        while r is None:
-            try:
-                r = requests.post(self.host + "OAuth/Token", data={"username": login,
-                                                                   "password": password,
-                                                                   "librus_long_term_token": "1",
-                                                                   "grant_type": "password"},
-                    headers=self.headers)
-
-                if r.ok:
-                    self.logged_in = True
-                    self.headers["Authorization"] = "Bearer " + r.json()["access_token"]
-
-                    return True
-                else:
-                    return False
-            except requests.exceptions.Timeout:
-                if loop >= 10:
-                    return False
-                else:
-                    loop += 1
-                    continue
-            except requests.exceptions.RequestException:
-                raise requests.exceptions.ConnectionError
 
     def get_data(self, url):
         if self.logged_in:
@@ -68,34 +51,41 @@ class Librus:
                 return requests.get(self.host + "2.0/" + url, headers=self.headers)
             except (requests.exceptions.ConnectionError, TimeoutError, requests.exceptions.Timeout,
                     requests.exceptions.ConnectTimeout, requests.exceptions.ReadTimeout):
-                    raise Exception("Connection error")
+                raise Exception("Connection error")
         else:
             raise Exception("User not logged in")
 
     def get_lucky_number(self):
-        if self.lucky_number is None:
-            r = self.get_data("LuckyNumbers")
-            self.lucky_number = r.json()["LuckyNumber"]["LuckyNumber"]
-            
-            return self.lucky_number
+        """
+        Get lucky number.
+        :return: lucky number (int), -1 if lucky number does it exist
+        """
+        r = self.get_data("LuckyNumbers")
 
-        return self.lucky_number
+        try:
+            lucky_number = r.json()["LuckyNumber"]["LuckyNumber"]
+
+            return lucky_number
+        except KeyError:
+            return -1
+
+    def get_lucky_number_json(self):
+        """
+        Get lucky number.
+        :return: json response.
+        """
+        r = self.get_data("LuckyNumbers")
+
+        return r.json()
 
     def get_grades(self):
         r = self.get_data("Grades")
 
-        if not self.subjects:
-            self.get_subjects()
+        subjects = self.get_subjects()
+        categories = self.get_categories()
+        teachers = self.get_teachers()
 
-        if not self.categories:
-            self.get_categories()
-
-        if not self.teachers:
-            self.get_teachers()
-
-        if self.grades is None:
-            self.grades = {i: [] for i in self.subjects.values()}
-
+        grades = {i: [] for i in subjects.values()}
         grades_comments = self.get_comments()
 
         for i in r.json()["Grades"]:
@@ -104,158 +94,312 @@ class Librus:
             else:
                 comment = "Brak komentarza"
 
-            self.grades[self.subjects[i["Subject"]["Id"]]].append({
+            grades[subjects[i["Subject"]["Id"]]].append({
                 "Grade": i["Grade"],
-                "Weight": self.categories[i["Category"]["Id"]]["Weight"],
-                "Category": self.categories[i["Category"]["Id"]]["Name"],
-                "Teacher": self.teachers[i["AddedBy"]["Id"]],
+                "Weight": categories[i["Category"]["Id"]]["Weight"],
+                "Category": categories[i["Category"]["Id"]]["Name"],
+                "Teacher": teachers[i["AddedBy"]["Id"]],
                 "Comment": comment,
-                "To_the_average": self.categories[i["Category"]["Id"]]["CountToTheAverage"]
+                "To_the_average": categories[i["Category"]["Id"]]["CountToTheAverage"]
             })
 
-        return self.grades
+        return grades
+
+    def get_grades_json(self):
+        """
+        Get grades.
+        :return: json response.
+        """
+        r = self.get_data("Grades")
+
+        return r.json()
 
     def get_subjects(self):
-        if self.subjects is None:
-            r = self.get_data("Subjects")
+        r = self.get_data("Subjects")
 
-            self.subjects = {i["Id"]: i["Name"] for i in r.json()["Subjects"]}
+        return {i["Id"]: i["Name"] for i in r.json()["Subjects"]}
 
-        return self.subjects
+    def get_subjects_json(self):
+        """
+        Get subjects.
+        :return: json response.
+        """
+        r = self.get_data("Subjects")
+
+        return r.json()
+
+    def get_subject(self, subject_id):
+        r = self.get_data("Subjects/{}".format(subject_id))
+
+        return r.json()
 
     def get_categories(self):
-        if self.categories is None:
-            self.categories = {}
+        categories = {}
 
-            r = self.get_data("Grades/Categories")
+        r = self.get_data("Grades/Categories")
 
-            for i in r.json()["Categories"]:
-                if "Weight" in i:
-                    w = i["Weight"]
+        for i in r.json()["Categories"]:
+            if "Weight" in i:
+                w = i["Weight"]
+            else:
+                w = None
+
+            count_to_the_average = None
+            try:
+                count_to_the_average_bool = i["CountToTheAverage"]
+
+                if count_to_the_average_bool:
+                    count_to_the_average = "Tak"
                 else:
-                    w = None
+                    count_to_the_average = "Nie"
 
-                if i["CountToTheAverage"]:
-                    i["CountToTheAverage"] = "Tak"
-                else:
-                    i["CountToTheAverage"] = "Nie"
+            except KeyError:
+                count_to_the_average = -1
 
-                self.categories[i["Id"]] = {
+            finally:
+                categories[i["Id"]] = {
                     "Name": i["Name"],
                     "Weight": w,
-                    "CountToTheAverage": i["CountToTheAverage"],
+                    "CountToTheAverage": count_to_the_average,
                 }
 
-        return self.categories
+        return categories
+
+    def get_categories_json(self):
+        """
+        Get all categories.
+        :return: json response.
+        """
+        r = self.get_data("Grades/Categories")
+
+        return r.json()
+
+    def get_category(self, category_id):
+        """
+        Get category.
+        :param category_id: id of a category.
+        :return: json response.
+        """
+        r = self.get_data("Grades/Categories/{}".format(category_id))
+
+        return r.json()
 
     def get_teachers(self, *, mode="normal"):
-        if self.teachers is None:
-            r = self.get_data("Users")
+        r = self.get_data("Users")
 
-            self.teachers = {
-                i["Id"]: {
-                    "FirstName": i["FirstName"],
-                    "LastName": i["LastName"]
-                } for i in r.json()["Users"]
-            }
+        teachers = {
+            i["Id"]: {
+                "FirstName": i["FirstName"],
+                "LastName": i["LastName"]
+            } for i in r.json()["Users"]
+        }
 
         if mode == "fullname":
-            return ["%s %s" % (data["FirstName"], data["LastName"]) for t_id, data in self.teachers.items()]
+            return ["%s %s" % (data["FirstName"], data["LastName"]) for t_id, data in teachers.items()]
         elif mode == "fullname-id":
-            return ["%s: %s %s" % (t_id, data["FirstName"], data["LastName"]) for t_id, data in self.teachers.items()]
+            return ["%s: %s %s" % (t_id, data["FirstName"], data["LastName"]) for t_id, data in teachers.items()]
 
-        return self.teachers
+        return teachers
+
+    def get_users(self):
+        """
+        Get all users.
+        :return: json response.
+        """
+        r = self.get_data("Users")
+
+        return r.json()
+
+    def get_user(self, user_id):
+        """
+        Get user details.
+        :param user_id: id of a user.
+        :return: json response.
+        """
+        r = self.get_data("Users/{}".format(user_id))
+
+        return r.json()
 
     def get_comments(self):
-        if self.comments is None:
-            r = self.get_data("Grades/Comments")
+        r = self.get_data("Grades/Comments")
 
-            self.comments = {
-                i["Id"]: {
-                    "Text": i["Text"]
-                } for i in r.json()["Comments"]
-            }
+        comments = {
+            i["Id"]: {
+                "Text": i["Text"]
+            } for i in r.json()["Comments"]
+        }
 
-        return self.comments
+        return comments
+
+    def get_comments_json(self):
+        """
+        Get all comments.
+        :return: json.response
+        """
+        r = self.get_data("Grades/Comments")
+
+        return r.json()
 
     def get_school_free_days(self):
-        if self.school_free_days is None:
-            r = self.get_data("SchoolFreeDays")
-            self.school_free_days = r.json()["SchoolFreeDays"]
+        r = self.get_data("SchoolFreeDays")
 
-            for i in self.school_free_days:
-                for e in ["Id", "Units"]:
-                    i.pop(e)
+        school_free_days = r.json()["SchoolFreeDays"]
 
-        return self.school_free_days
+        for i in school_free_days:
+            for e in ["Id", "Units"]:
+                i.pop(e)
+
+        return school_free_days
+
+    def get_school_free_days_json(self):
+        """
+        Get school free days.
+        :return: json response
+        """
+        r = self.get_data("SchoolFreeDays")
+
+        return r.json()
 
     def get_teacher_free_days(self):
-        if self.teachers is None:
-            self.get_teachers()
+        r = self.get_data("TeacherFreeDays")
 
-        if self.teacher_free_days_types is None:
-            r = self.get_data("TeacherFreeDays/Types")
+        teacher_free_days = r.json()["TeacherFreeDays"]
+        teachers = self.get_teachers()
 
-            self.teacher_free_days_types = {
-                i["Id"]: i["Name"] for i in r.json()["Types"]
-            }
+        r = self.get_data("TeacherFreeDays/Types")
+        teacher_free_days_types = {
+            i["Id"]: i["Name"] for i in r.json()["Types"]
+        }
 
-        if self.teacher_free_days is None:
-            r = self.get_data("TeacherFreeDays")
+        for i in teacher_free_days:
+            i.pop("Id")
+            i["Teacher"] = teachers[i["Teacher"]["Id"]]
+            i["Type"] = teacher_free_days_types[i["Type"]["Id"]]
 
-            self.teacher_free_days = r.json()["TeacherFreeDays"]
+        return teacher_free_days
 
-            for i in self.teacher_free_days:
-                i.pop("Id")
-                i["Teacher"] = self.teachers[i["Teacher"]["Id"]]
-                i["Type"] = self.teacher_free_days_types[i["Type"]["Id"]]
+    def get_teacher_free_days_json(self):
+        """
+        Get all teacher free days.
+        :return: json response
+        """
+        r = self.get_data("TeacherFreeDays")
 
-        return self.teacher_free_days
+        return r.json()
 
     def get_lessons(self):
-        if self.lessons is None:
-            if self.subjects is None:
-                self.get_subjects()
+        r = self.get_data("Lessons")
 
-            if self.teachers is None:
-                self.get_teachers()
+        subjects = self.get_subjects()
+        teachers = self.get_teachers()
 
-            r = self.get_data("Lessons")
+        lessons = {
+            i["Id"]: {
+                "Subject": subjects[i["Subject"]["Id"]],
+                "Teacher": teachers[i["Teacher"]["Id"]]
 
-            self.lessons = {
-                i["Id"]: {
-                    "Subject": self.subjects[i["Subject"]["Id"]],
-                    "Teacher": self.teachers[i["Teacher"]["Id"]]
+            } for i in r.json()["Lessons"]
+        }
 
-                } for i in r.json()["Lessons"]
-            }
+        return lessons
 
-        return self.lessons
+    def get_lessons_json(self):
+        """
+        Get all lessons
+        :return: json response
+        """
+        r = self.get_data("Lessons")
+
+        return r.json()
+
+    def get_lesson(self, lesson_id):
+        """
+        Get lesson details.
+        :param lesson_id: id of a lesson.
+        :return: json response.
+        """
+        r = self.get_data("Lessons/{}".format(lesson_id))
+
+        return r.json()
 
     def get_attendances(self):
-        if self.attendances is None:
-            if self.attendances_types is None:
-                r = self.get_data("Attendances/Types")
+        r = self.get_data("Attendances/Types")
 
-                self.attendances_types = {
-                    i["Id"]: {
-                        "Name": i["Name"],
-                        "Short": i["Short"],
-                        "Standard": i["Standard"],
-                        "IsPresenceKind": i["IsPresenceKind"],
-                        "Order": i["Order"]
-                    } for i in r.json()["Types"]
-                }
+        attendances_types = {
+            i["Id"]: {
+                "Name": i["Name"],
+                "Short": i["Short"],
+                "Standard": i["Standard"],
+                "IsPresenceKind": i["IsPresenceKind"],
+                "Order": i["Order"]
+            } for i in r.json()["Types"]
+        }
 
-            if self.lessons is None:
-                self.get_lessons()
+        lessons = self.get_lessons()
+        teachers = self.get_teachers()
+        attendances = self.get_data("Attendances").json()["Attendances"]
 
-            self.attendances = self.get_data("Attendances").json()["Attendances"]
+        for i in attendances:
+            i.pop("Student")
+            i["Type"] = attendances_types[i["Type"]["Id"]]
+            i["AddedBy"] = teachers[i["AddedBy"]["Id"]]
+            i["Lesson"] = lessons[i["Lesson"]["Id"]]
 
-            for i in self.attendances:
-                i.pop("Student")
-                i["Type"] = self.attendances_types[i["Type"]["Id"]]
-                i["AddedBy"] = self.teachers[i["AddedBy"]["Id"]]
-                i["Lesson"] = self.lessons[i["Lesson"]["Id"]]
+        return attendances
 
-        return self.attendances
+    def get_attendances_json(self):
+        """
+        Get all attendances.
+        :return: json response
+        """
+        r = self.get_data("Attendances")
+
+        return r.json()
+
+    # ---------- V2 ---------- #
+    def get_class(self, class_id):
+        """
+        Get class details.
+        :param class_id: id of a class
+        :return: json response
+        """
+        r = self.get_data("Classes/{}".format(class_id))
+
+        return r.json()
+
+    def get_colors(self):
+        """
+        Get all colors.
+        :return: json response
+        """
+        r = self.get_data("Colors/")
+
+        return r.json()
+
+    def get_color(self, color_id):
+        """
+        Get color details.
+        :param color_id: id of a color
+        :return: json response
+        """
+        r = self.get_data("Colors/{}".format(color_id))
+
+        return r.json()
+
+    def get_homework_assignments(self):
+        """
+        Get homework assignments. THIS WILL RETURN AN ERROR JSON IF USER DOES NOT HAVE PREMIUM!
+        :return: json response
+        """
+        r = self.get_data("HomeWorkAssignments")
+
+        return r.json()
+
+    def get_text_grades(self):
+        """
+        Get all text grades.
+        :return: json response
+        """
+        r = self.get_data("TextGrades")
+
+        return r.json()
