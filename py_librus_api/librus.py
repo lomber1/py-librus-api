@@ -4,24 +4,26 @@ import sys
 
 class Librus:
     host = "https://api.librus.pl/"
-    headers = {
-        "Authorization": "Basic Mjg6ODRmZGQzYTg3YjAzZDNlYTZmZmU3NzdiNThiMzMyYjE="
-    }
-    logged_in = False
 
-    lucky_number = None
-    grades = None
-    subjects = None
-    categories = None
-    students = None
-    teachers = None
-    comments = None
-    lessons = None
-    school_free_days = None
-    teacher_free_days = None
-    teacher_free_days_types = None
-    attendances = None
-    attendances_types = None
+    def __init__(self):
+        self.headers = {
+            "Authorization": "Basic Mjg6ODRmZGQzYTg3YjAzZDNlYTZmZmU3NzdiNThiMzMyYjE="
+        }
+        self.logged_in = False
+
+        self.lucky_number = None
+        self.grades = None
+        self.subjects = None
+        self.categories = None
+        self.students = None
+        self.teachers = None
+        self.comments = None
+        self.lessons = None
+        self.school_free_days = None
+        self.teacher_free_days = None
+        self.teacher_free_days_types = None
+        self.attendances = None
+        self.attendances_types = None
 
     # Checks data and decides method of login
     def login(self, login, password):
@@ -29,38 +31,34 @@ class Librus:
             if login is None or password is None or login == "" or password == "":
                 return False
             else:
-                if self.make_connection(login, password):
-                    return True
-                else:
-                    return False
+                """Make connection to the host and get auth token"""
+                r = None
+                loop = 0
+                while r is None:
+                    try:
+                        r = requests.post(self.host + "OAuth/Token", data={"username": login,
+                                                                           "password": password,
+                                                                           "librus_long_term_token": "1",
+                                                                           "grant_type": "password"},
+                                          headers=self.headers)
+
+                        if r.ok:
+                            self.logged_in = True
+                            self.headers["Authorization"] = "Bearer " + r.json()["access_token"]
+
+                            return True
+                        else:
+                            return False
+                    except requests.exceptions.Timeout:
+                        if loop >= 10:
+                            return False
+                        else:
+                            loop += 1
+                            continue
+                    except requests.exceptions.RequestException:
+                        raise requests.exceptions.ConnectionError
 
     # Make connection and get access token
-    def make_connection(self, login, password):
-        r = None
-        loop = 0
-        while r is None:
-            try:
-                r = requests.post(self.host + "OAuth/Token", data={"username": login,
-                                                                   "password": password,
-                                                                   "librus_long_term_token": "1",
-                                                                   "grant_type": "password"},
-                    headers=self.headers)
-
-                if r.ok:
-                    self.logged_in = True
-                    self.headers["Authorization"] = "Bearer " + r.json()["access_token"]
-
-                    return True
-                else:
-                    return False
-            except requests.exceptions.Timeout:
-                if loop >= 10:
-                    return False
-                else:
-                    loop += 1
-                    continue
-            except requests.exceptions.RequestException:
-                raise requests.exceptions.ConnectionError
 
     def get_data(self, url):
         if self.logged_in:
