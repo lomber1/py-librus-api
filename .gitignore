@@ -4,3 +4,5 @@ __pycache__
 build
 dist
 py_librus_api.egg-info
+test.py
+venv/
