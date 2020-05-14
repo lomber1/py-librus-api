@@ -100,6 +100,11 @@ class Librus:
 
         return {i["Id"]: i["Name"] for i in r.json()["Subjects"]}
 
+    def get_subject(self, subject_id):
+        r = self.get_data("Subjects/{}".format(subject_id))
+
+        return r.json()
+
     def get_categories(self, v2=False):
         categories = {}
 
@@ -127,6 +132,11 @@ class Librus:
 
         return categories
 
+    def get_category(self, category_id):
+        r = self.get_data("Grades/Categories/{}".format(category_id))
+
+        return r.json()
+
     def get_teachers(self, *, v2=False, mode="normal"):
         r = self.get_data("Users")
 
@@ -146,6 +156,11 @@ class Librus:
             return ["%s: %s %s" % (t_id, data["FirstName"], data["LastName"]) for t_id, data in teachers.items()]
 
         return teachers
+
+    def get_teacher(self, teacher_id):
+        r = self.get_data("Users/{}".format(teacher_id))
+
+        return r.json()
 
     def get_comments(self, v2=False):
         r = self.get_data("Grades/Comments")
@@ -216,6 +231,11 @@ class Librus:
 
         return lessons
 
+    def get_lesson(self, lesson_id):
+        r = self.get_data("Lessons/{}".format(lesson_id))
+
+        return r.json()
+
     def get_attendances(self, v2=False):
         r = self.get_data("Attendances/Types")
 
@@ -243,3 +263,51 @@ class Librus:
             i["Lesson"] = lessons[i["Lesson"]["Id"]]
 
         return attendances
+
+    # ---------- V2 ---------- #
+    def get_class(self, class_id):
+        """
+        Get class details.
+        :param class_id: id of a class
+        :return: json response
+        """
+        r = self.get_data("Classes/{}".format(class_id))
+
+        return r.json()
+
+    def get_colors(self):
+        """
+        Get all colors.
+        :return: json response
+        """
+        r = self.get_data("Colors/")
+
+        return r.json()
+
+    def get_color(self, color_id):
+        """
+        Get color details.
+        :param color_id: id of a color
+        :return: json response
+        """
+        r = self.get_data("Colors/{}".format(color_id))
+
+        return r.json()
+
+    def get_homework_assignments(self):
+        """
+        Get homework assignments. THIS WILL RETURN AN ERROR JSON IF USER DOES NOT HAVE PREMIUM!
+        :return: json response
+        """
+        r = self.get_data("HomeWorkAssignments")
+
+        return r.json()
+
+    def get_text_grades(self):
+        """
+        Get all text grades.
+        :return: json response
+        """
+        r = self.get_data("TextGrades")
+
+        return r.json()
