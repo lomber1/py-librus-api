@@ -11,20 +11,6 @@ class Librus:
         }
         self.logged_in = False
 
-        self.lucky_number = None
-        self.grades = None
-        self.subjects = None
-        self.categories = None
-        self.students = None
-        self.teachers = None
-        self.comments = None
-        self.lessons = None
-        self.school_free_days = None
-        self.teacher_free_days = None
-        self.teacher_free_days_types = None
-        self.attendances = None
-        self.attendances_types = None
-
     # Checks data and decides method of login
     def login(self, login, password):
         if not self.logged_in:
@@ -66,34 +52,27 @@ class Librus:
                 return requests.get(self.host + "2.0/" + url, headers=self.headers)
             except (requests.exceptions.ConnectionError, TimeoutError, requests.exceptions.Timeout,
                     requests.exceptions.ConnectTimeout, requests.exceptions.ReadTimeout):
-                    raise Exception("Connection error")
+                raise Exception("Connection error")
         else:
             raise Exception("User not logged in")
 
     def get_lucky_number(self):
-        if self.lucky_number is None:
-            r = self.get_data("LuckyNumbers")
-            self.lucky_number = r.json()["LuckyNumber"]["LuckyNumber"]
-            
-            return self.lucky_number
+        r = self.get_data("LuckyNumbers")
+        lucky_number = r.json()["LuckyNumber"]["LuckyNumber"]
 
-        return self.lucky_number
+        return lucky_number
 
-    def get_grades(self):
+    def get_grades(self, v2=False):
         r = self.get_data("Grades")
 
-        if not self.subjects:
-            self.get_subjects()
+        if v2:
+            return r.json()
 
-        if not self.categories:
-            self.get_categories()
+        subjects = self.get_subjects()
+        categories = self.get_categories()
+        teachers = self.get_teachers()
 
-        if not self.teachers:
-            self.get_teachers()
-
-        if self.grades is None:
-            self.grades = {i: [] for i in self.subjects.values()}
-
+        grades = {i: [] for i in subjects.values()}
         grades_comments = self.get_comments()
 
         for i in r.json()["Grades"]:
@@ -102,158 +81,165 @@ class Librus:
             else:
                 comment = "Brak komentarza"
 
-            self.grades[self.subjects[i["Subject"]["Id"]]].append({
+            grades[subjects[i["Subject"]["Id"]]].append({
                 "Grade": i["Grade"],
-                "Weight": self.categories[i["Category"]["Id"]]["Weight"],
-                "Category": self.categories[i["Category"]["Id"]]["Name"],
-                "Teacher": self.teachers[i["AddedBy"]["Id"]],
+                "Weight": categories[i["Category"]["Id"]]["Weight"],
+                "Category": categories[i["Category"]["Id"]]["Name"],
+                "Teacher": teachers[i["AddedBy"]["Id"]],
                 "Comment": comment,
-                "To_the_average": self.categories[i["Category"]["Id"]]["CountToTheAverage"]
+                "To_the_average": categories[i["Category"]["Id"]]["CountToTheAverage"]
             })
 
-        return self.grades
+        return grades
 
-    def get_subjects(self):
-        if self.subjects is None:
-            r = self.get_data("Subjects")
+    def get_subjects(self, v2=False):
+        r = self.get_data("Subjects")
 
-            self.subjects = {i["Id"]: i["Name"] for i in r.json()["Subjects"]}
+        if v2:
+            return r.json()
 
-        return self.subjects
+        return {i["Id"]: i["Name"] for i in r.json()["Subjects"]}
 
-    def get_categories(self):
-        if self.categories is None:
-            self.categories = {}
+    def get_categories(self, v2=False):
+        categories = {}
 
-            r = self.get_data("Grades/Categories")
+        r = self.get_data("Grades/Categories")
 
-            for i in r.json()["Categories"]:
-                if "Weight" in i:
-                    w = i["Weight"]
-                else:
-                    w = None
+        if v2:
+            return r.json()
 
-                if i["CountToTheAverage"]:
-                    i["CountToTheAverage"] = "Tak"
-                else:
-                    i["CountToTheAverage"] = "Nie"
+        for i in r.json()["Categories"]:
+            if "Weight" in i:
+                w = i["Weight"]
+            else:
+                w = None
 
-                self.categories[i["Id"]] = {
-                    "Name": i["Name"],
-                    "Weight": w,
-                    "CountToTheAverage": i["CountToTheAverage"],
-                }
+            if i["CountToTheAverage"]:
+                i["CountToTheAverage"] = "Tak"
+            else:
+                i["CountToTheAverage"] = "Nie"
 
-        return self.categories
-
-    def get_teachers(self, *, mode="normal"):
-        if self.teachers is None:
-            r = self.get_data("Users")
-
-            self.teachers = {
-                i["Id"]: {
-                    "FirstName": i["FirstName"],
-                    "LastName": i["LastName"]
-                } for i in r.json()["Users"]
+            categories[i["Id"]] = {
+                "Name": i["Name"],
+                "Weight": w,
+                "CountToTheAverage": i["CountToTheAverage"],
             }
+
+        return categories
+
+    def get_teachers(self, *, v2=False, mode="normal"):
+        r = self.get_data("Users")
+
+        if v2:
+            return r.json()
+
+        teachers = {
+            i["Id"]: {
+                "FirstName": i["FirstName"],
+                "LastName": i["LastName"]
+            } for i in r.json()["Users"]
+        }
 
         if mode == "fullname":
-            return ["%s %s" % (data["FirstName"], data["LastName"]) for t_id, data in self.teachers.items()]
+            return ["%s %s" % (data["FirstName"], data["LastName"]) for t_id, data in teachers.items()]
         elif mode == "fullname-id":
-            return ["%s: %s %s" % (t_id, data["FirstName"], data["LastName"]) for t_id, data in self.teachers.items()]
+            return ["%s: %s %s" % (t_id, data["FirstName"], data["LastName"]) for t_id, data in teachers.items()]
 
-        return self.teachers
+        return teachers
 
-    def get_comments(self):
-        if self.comments is None:
-            r = self.get_data("Grades/Comments")
+    def get_comments(self, v2=False):
+        r = self.get_data("Grades/Comments")
 
-            self.comments = {
-                i["Id"]: {
-                    "Text": i["Text"]
-                } for i in r.json()["Comments"]
-            }
+        if v2:
+            return r.json()
 
-        return self.comments
+        comments = {
+            i["Id"]: {
+                "Text": i["Text"]
+            } for i in r.json()["Comments"]
+        }
 
-    def get_school_free_days(self):
-        if self.school_free_days is None:
-            r = self.get_data("SchoolFreeDays")
-            self.school_free_days = r.json()["SchoolFreeDays"]
+        return comments
 
-            for i in self.school_free_days:
-                for e in ["Id", "Units"]:
-                    i.pop(e)
+    def get_school_free_days(self, v2=False):
+        r = self.get_data("SchoolFreeDays")
 
-        return self.school_free_days
+        if v2:
+            return r.json()
 
-    def get_teacher_free_days(self):
-        if self.teachers is None:
-            self.get_teachers()
+        school_free_days = r.json()["SchoolFreeDays"]
 
-        if self.teacher_free_days_types is None:
-            r = self.get_data("TeacherFreeDays/Types")
+        for i in school_free_days:
+            for e in ["Id", "Units"]:
+                i.pop(e)
 
-            self.teacher_free_days_types = {
-                i["Id"]: i["Name"] for i in r.json()["Types"]
-            }
+        return school_free_days
 
-        if self.teacher_free_days is None:
-            r = self.get_data("TeacherFreeDays")
+    def get_teacher_free_days(self, v2=False):
+        r = self.get_data("TeacherFreeDays")
 
-            self.teacher_free_days = r.json()["TeacherFreeDays"]
+        if v2:
+            return r.json()
 
-            for i in self.teacher_free_days:
-                i.pop("Id")
-                i["Teacher"] = self.teachers[i["Teacher"]["Id"]]
-                i["Type"] = self.teacher_free_days_types[i["Type"]["Id"]]
+        teacher_free_days = r.json()["TeacherFreeDays"]
 
-        return self.teacher_free_days
+        teachers = self.get_teachers()
 
-    def get_lessons(self):
-        if self.lessons is None:
-            if self.subjects is None:
-                self.get_subjects()
+        r = self.get_data("TeacherFreeDays/Types")
+        teacher_free_days_types = {
+            i["Id"]: i["Name"] for i in r.json()["Types"]
+        }
 
-            if self.teachers is None:
-                self.get_teachers()
+        for i in teacher_free_days:
+            i.pop("Id")
+            i["Teacher"] = teachers[i["Teacher"]["Id"]]
+            i["Type"] = teacher_free_days_types[i["Type"]["Id"]]
 
-            r = self.get_data("Lessons")
+        return teacher_free_days
 
-            self.lessons = {
-                i["Id"]: {
-                    "Subject": self.subjects[i["Subject"]["Id"]],
-                    "Teacher": self.teachers[i["Teacher"]["Id"]]
+    def get_lessons(self, v2=False):
+        r = self.get_data("Lessons")
 
-                } for i in r.json()["Lessons"]
-            }
+        if v2:
+            return r.json()
 
-        return self.lessons
+        subjects = self.get_subjects()
+        teachers = self.get_teachers()
 
-    def get_attendances(self):
-        if self.attendances is None:
-            if self.attendances_types is None:
-                r = self.get_data("Attendances/Types")
+        lessons = {
+            i["Id"]: {
+                "Subject": subjects[i["Subject"]["Id"]],
+                "Teacher": teachers[i["Teacher"]["Id"]]
 
-                self.attendances_types = {
-                    i["Id"]: {
-                        "Name": i["Name"],
-                        "Short": i["Short"],
-                        "Standard": i["Standard"],
-                        "IsPresenceKind": i["IsPresenceKind"],
-                        "Order": i["Order"]
-                    } for i in r.json()["Types"]
-                }
+            } for i in r.json()["Lessons"]
+        }
 
-            if self.lessons is None:
-                self.get_lessons()
+        return lessons
 
-            self.attendances = self.get_data("Attendances").json()["Attendances"]
+    def get_attendances(self, v2=False):
+        r = self.get_data("Attendances/Types")
 
-            for i in self.attendances:
-                i.pop("Student")
-                i["Type"] = self.attendances_types[i["Type"]["Id"]]
-                i["AddedBy"] = self.teachers[i["AddedBy"]["Id"]]
-                i["Lesson"] = self.lessons[i["Lesson"]["Id"]]
+        if v2:
+            return r.json()
 
-        return self.attendances
+        attendances_types = {
+            i["Id"]: {
+                "Name": i["Name"],
+                "Short": i["Short"],
+                "Standard": i["Standard"],
+                "IsPresenceKind": i["IsPresenceKind"],
+                "Order": i["Order"]
+            } for i in r.json()["Types"]
+        }
+
+        lessons = self.get_lessons()
+        teachers = self.get_teachers()
+        attendances = self.get_data("Attendances").json()["Attendances"]
+
+        for i in attendances:
+            i.pop("Student")
+            i["Type"] = attendances_types[i["Type"]["Id"]]
+            i["AddedBy"] = teachers[i["AddedBy"]["Id"]]
+            i["Lesson"] = lessons[i["Lesson"]["Id"]]
+
+        return attendances
