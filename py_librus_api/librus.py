@@ -1,5 +1,6 @@
 import requests
 import sys
+from . import exceptions
 
 
 class Librus:
@@ -68,15 +69,15 @@ class Librus:
                 return requests.get(self.host + "2.0/" + url, headers=self.headers)
             except (requests.exceptions.ConnectionError, TimeoutError, requests.exceptions.Timeout,
                     requests.exceptions.ConnectTimeout, requests.exceptions.ReadTimeout):
-                    raise Exception("Connection error")
+                    raise exceptions.ConnectionError("Connection error")
         else:
-            raise Exception("User not logged in")
+            raise exceptions.UserNotLoggedInError("User not logged in")
 
     def get_lucky_number(self):
         if self.lucky_number is None:
             r = self.get_data("LuckyNumbers")
             self.lucky_number = r.json()["LuckyNumber"]["LuckyNumber"]
-            
+
             return self.lucky_number
 
         return self.lucky_number
